@@ -1,4 +1,4 @@
-# latent_learning_successor_representation# latent_learning_successor_representation
+# latent_learning_successor_representation
 
 This repository contains the source code and data to reproduce the simulations and the figures described in the paper **Revealing the mechanisms underlying latent learning with successor representations** (Menezes, M.; Zeng, X.; Cheng, S.).
 
