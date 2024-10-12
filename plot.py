@@ -149,7 +149,7 @@ def successor_representation (env, path, simulations, total_steps, schemes, labe
     elif env == 'tolman':
         num_states = 72
     num_actions = 4
-    recording_trial = [50, 100] # the trial to plot the SR matrix. Direct learning only supports up to 50.
+    recording_trial = [50, 100] # The trial to plot the SR matrix. It ranges from 0 to 100 in intervals of 10. Direct learning only supports up to 50.
     action_mapping = {0: 'left', 1: 'up', 2: 'right', 3: 'down'}
     SR_direct = []
     SR_targeted = []
@@ -184,7 +184,7 @@ def successor_representation (env, path, simulations, total_steps, schemes, labe
             SR_continuous = np.array(SR)
 
     # [simulation][state][action][sr]
-    if plot_cosine_similarity:
+    if plot_cosine_similarity: # it runs the last trial value in recording_trial list.
         
         ########### cosine similarity #############
         
@@ -230,9 +230,9 @@ def successor_representation (env, path, simulations, total_steps, schemes, labe
     else:
         
         # select the trial
-        trial = 100 # ranges from 0 to 100
+        trial = 100 # ranges from 0 to 100 in intervals of 10 -> make sure to add the trial value in recording_trial list above.
         if 'direct' in scheme and trial > 50:
-            trial = 50 # ranges from 0 to 100
+            trial = 50 # ranges from 0 to 50 in intervals of 10 -> make sure to add the trial value in recording_trial list above.
         
         successor_features = SRs[trial]
         action = list(action_mapping.keys())[list(action_mapping.values()).index('up')]     
@@ -260,7 +260,7 @@ def successor_representation (env, path, simulations, total_steps, schemes, labe
             (p, q) = state_heat_tuple # location of the cross
             plt.scatter(p+0.5, q+0.5, s= 500, marker='X', color = 'darkorange')
                 
-        else:
+        else: # it shows the result only to the last element of the schemes list in the main function. Change the element's order in the schemes list to vary the SR results.
 
             successor_features = NormalizeData(successor_features)   
             successor_matrix = []
