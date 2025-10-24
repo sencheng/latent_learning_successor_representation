@@ -63,7 +63,8 @@ class InterfaceDiscrete(AbstractInterface):
         self.trajectories = []
         # controls whether to actually set the terminal flag when the terminal is reached
         self.if_terminal = False
-        self.not_learning_doors = True
+        self.not_learning_doors = True # to control door activation during learning phase
+        self.design = "targeted"
 
 
     def step(self, action: int) -> (np.ndarray, float, bool, dict):
@@ -114,10 +115,18 @@ class InterfaceDiscrete(AbstractInterface):
         reward = self.R[self.currentState]
         end_trial = self.E[self.currentState]
         
+        # add doors restrictions
         if self.currentEpisode > self.rewarding_episode and not self.not_learning_doors:
-            # add doors restrictions
-            self.update_world()
+            self.enable_doors(activate=False) # set false if you want to deactivate doors
             self.not_learning_doors = True
+
+        # only for mistargeted design: switch goal location after latent learning phase
+        if self.design == "mistargeted" and self.currentEpisode == self.rewarding_episode + 1:
+            self.world['goal'] = np.array([99])
+            self.goals = np.array([99])
+            self.world['terminals'] = np.array([99])
+            self.E = np.zeros(100)
+            self.E[99] = 1
 
         if end_trial:
             if not self.latent_learning:
@@ -135,17 +144,24 @@ class InterfaceDiscrete(AbstractInterface):
         self.currentStep += 1
 
         return self.observation, reward, end_trial, {}
-
-
-    def update_world(self):
+    
+    def enable_doors(self, activate=True):
         door_transition = [(156, 3, 170 ), (159, 0, 158), (117, 3, 131), (114, 2, 115), 
                            (72, 3, 86), (75, 0, 74), (33, 3, 47), ( 36, 0, 35), ( 78, 1, 64), 
                            ( 81, 0, 80), ( 123, 1, 109), ( 120, 2, 121), ( 162, 1, 148), ( 165, 0, 164)]
         
-        for (s,a,s_t) in door_transition:
-            self.world['sas'][s][a][s_t] = 0 # no transition allowed
-            self.world['sas'][s][a][s] = 1
+        if activate:
+            print('Enabling doors')
+            for (s,a,s_t) in door_transition:
+                self.world['sas'][s][a][s_t] = 0 # no transition allowed
+                self.world['sas'][s][a][s] = 1
         
+        else:
+            print('Disabling doors')
+            for (s,a,s_t) in door_transition:
+                self.world['sas'][s][a][s_t] = 1 # transition allowed
+                self.world['sas'][s][a][s] = 0
+
         self.T = self.world['sas']
         
     def get_transition(self) -> np.ndarray:

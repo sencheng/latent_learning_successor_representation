@@ -44,6 +44,11 @@ def single_run(maze='gridworld', policy='softmax', design='targeted', beta=10, l
     # initialize world
     world = make_gridworld(10, 10, terminals=[99], rewards=np.array(env_rewards), goals=[99])
 
+    if design == 'mistargeted':
+        world = make_gridworld(10, 10, terminals=[9], rewards=np.array(env_rewards), goals=[9])
+    else:
+        world = make_gridworld(10, 10, terminals=[99], rewards=np.array(env_rewards), goals=[99])
+
     if design == 'continuous': 
         world['starting_states'] = np.array([0, 9, 50, 59, 90, 99])
     else:
@@ -78,7 +83,7 @@ def single_run(maze='gridworld', policy='softmax', design='targeted', beta=10, l
     else:
         rlAgent.trialNumber=modules['rl_interface'].total_episode
 
-    if design == 'targeted':
+    if design == 'targeted' or design == 'mistargeted':
         modules['rl_interface'].if_terminal = True
     elif design == 'continuous':
         modules['rl_interface'].if_terminal = False
@@ -111,8 +116,12 @@ def single_run(maze='gridworld', policy='softmax', design='targeted', beta=10, l
     reward_f[0] = rlAgent.retrieve_reward_function(range(num_states))
 
     # let the agent learn, with extremely large number of allowed maximum steps
+    acc_episode = 0
     for m in range(1, len(recording_episodes)):
+        if acc_episode >= modules['rl_interface'].rewarding_episode:
+            modules['rl_interface'].starting_states = np.array([0])
         rlAgent.train(recording_episodes[m] - recording_episodes[m - 1], maxSteps, replayBatchSize=32)
+        acc_episode += recording_episodes[m] - recording_episodes[m - 1]
         # before next training stage, record SR
         for i, state_idx in enumerate(range(num_states)):
             SRs[recording_episodes[m]][i] = rlAgent.retrieve_SR(state_idx)
@@ -131,9 +140,8 @@ def single_run(maze='gridworld', policy='softmax', design='targeted', beta=10, l
 
 if __name__ == '__main__':
     env = 'gridworld'
-    # defines latent or direct learning
-    latent = False
-    design = 'targeted'
+    latent = True # defines latent or direct learning
+    design = 'targeted' # targeted, mistargeted, continuous
     policy = 'greedy'
     beta = 1 # for softmax policy
     epochs = 10

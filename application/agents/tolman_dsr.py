@@ -327,7 +327,7 @@ class SimpleDSR(AbstractDynaQAgent):
                 self.M.store(experience)
                 
                 # to store the last experience transition to itself in memory module
-                if self.design == 'continuous' and next_state_idx == self.numberOfStates - 1:
+                if (self.design != 'continuous' and next_state_idx == self.numberOfStates - 1) or (self.design == 'continuous' and next_state_idx == self.numberOfStates - 1 and self.trial_number > self.interfaceOAI.rewarding_episode):
                     experience={'state': next_state_idx, 'action': 1, 'reward': reward, 'next_state': next_state_idx, 'terminal': (1 - stopEpisode)}
                     self.M.store(experience)
                 state = next_state

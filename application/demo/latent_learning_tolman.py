@@ -30,7 +30,7 @@ def set_inv_tran(invalid_transitions):
         new_inv_tran.append(invert)
     return new_inv_tran
 
-def single_run(maze='tolman', policy='softmax', beta=10, latent=False, design='targeted', if_doors=False):
+def single_run(maze='tolman', policy='softmax', beta=10, latent=False, design='targeted', act_doors=False):
     '''
     maze:   tolman
     policy: softmax or greedy
@@ -64,7 +64,7 @@ def single_run(maze='tolman', policy='softmax', beta=10, latent=False, design='t
     
     invalid_transitions = set_inv_tran(invalid_transition_one_way)
 
-    if if_doors:
+    if act_doors:
         doors = [(156, 170 ), (159, 158), (117, 131), (114, 115), (72, 86), (75, 74), (33, 47), ( 36, 35), ( 78, 64), ( 81, 80), ( 123, 109), ( 120, 121), ( 162, 148), ( 165, 164)]
         invalid_transitions += doors
 
@@ -100,10 +100,11 @@ def single_run(maze='tolman', policy='softmax', beta=10, latent=False, design='t
     maxSteps = 1500
 
     # initialize RL agent
-    rlAgent = SimpleDSR(interfaceOAI=modules['rl_interface'], epsilon=0.3, beta=beta, learningRate=0.99,
+    rlAgent = SimpleDSR(interfaceOAI=modules['rl_interface'], epsilon=0.3, beta=beta, learningRate=0.9,
                       gamma=0.95, trialEndFcn=trialEndCallback, observations=observations)
     rlAgent.mask_actions = True
     rlAgent.use_follow_up_state = True
+    rlAgent.not_learning_doors = True
     rlAgent.policy = policy
     rlAgent.design = design
 
@@ -117,7 +118,7 @@ def single_run(maze='tolman', policy='softmax', beta=10, latent=False, design='t
     elif design == 'continuous':
         modules['rl_interface'].if_terminal = False
     
-    # set false if doors are inactivated and you want to enable doors only during learning phase
+    # set false if doors are inactivated and you want to enable doors
     modules['rl_interface'].not_learning_doors = True
 
     # initialize performance Monitor
@@ -175,10 +176,10 @@ def single_run(maze='tolman', policy='softmax', beta=10, latent=False, design='t
 
 if __name__ == '__main__':
     env = 'tolman'
-    design = 'continuous'
+    design = 'targeted' # targeted, continuous
     # defines latent or direct learning
     latent = True
-    if_doors = False
+    act_doors = False # if doors are inactivated and you want to enable doors
     policy = 'greedy'
     beta = 1 # for softmax policy
     epochs = 10
@@ -192,7 +193,7 @@ if __name__ == '__main__':
         data_path = data_folder + 'Trainingdata_%s.pickle' % (epoch + 1)
         if not os.path.exists(data_path):
 
-            SRs, Qvalues, reward_f, escape_latency, states_trans_probs = single_run(policy=policy, latent=latent, beta=beta, design=design, if_doors=if_doors)
+            SRs, Qvalues, reward_f, escape_latency, states_trans_probs = single_run(policy=policy, latent=latent, beta=beta, design=design, act_doors=act_doors)
             data = {'SRs': SRs, 'Qvalues': Qvalues,  'Reward': reward_f, 'Escape': escape_latency, 'SAProbs': states_trans_probs}
         
             with open(data_path, 'wb') as handle:

@@ -5,7 +5,7 @@ from tensorflow.python.framework.ops import disable_eager_execution
 disable_eager_execution()
 from tensorflow.keras.models import Sequential, clone_model
 from tensorflow.keras.layers import Dense
-from tensorflow.keras import initializers
+
 # memory module
 from application.memory_modules.dyna_memory import FreqMemory
 
@@ -298,10 +298,9 @@ class SimpleDSR(AbstractDynaQAgent):
                 self.M.store(experience)
 
                 # to store the last experience transition to itself in memory module
-                if self.design == 'continuous' and next_state_idx == self.numberOfStates - 1: 
-                    for ac in range(self.numberOfActions):
-                        experience={'state': next_state_idx, 'action': ac, 'reward': reward, 'next_state': next_state_idx, 'terminal': (1 - stopEpisode)}
-                        self.M.store(experience)
+                if (self.design == 'mistargeted' and next_state_idx == 9) or (self.design == 'targeted' and next_state_idx == self.numberOfStates - 1) or (self.design == 'continuous' and next_state_idx == self.numberOfStates - 1 and self.trial_number > self.interfaceOAI.rewarding_episode): 
+                    experience={'state': next_state_idx, 'action': self.get_opposite(action), 'reward': reward, 'next_state': next_state_idx, 'terminal': (1 - stopEpisode)}
+                    self.M.store(experience)
                     
                 state = next_state
                 state_idx = next_state_idx
@@ -400,6 +399,15 @@ class SimpleDSR(AbstractDynaQAgent):
             # reset update timer
             self.steps_since_last_update = 0
 
+    def get_opposite(self, action):
+        '''
+        This function is used to get the opposite action in the gridworld.
+        | **Args**
+        | action:                       The action for which the opposite action is required.
+        '''
+        opposites = {0: 2, 1: 3, 2: 0, 3: 1}
+        return opposites.get(action) 
+    
     def update_Q(self, experience):
         '''
         This function is a dummy function and does nothing (implementation required by parent class).
